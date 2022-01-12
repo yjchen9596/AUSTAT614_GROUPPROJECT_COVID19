@@ -1,0 +1,121 @@
+---
+title: "R Notebook"
+output:
+  word_document: default
+  html_document:
+    df_print: paged
+---
+
+```{r}
+
+library(tidyverse)
+
+NOPD <- read_csv("~/DATA612_group_project/NOPD_Use_of_Force_Incidents.csv")
+
+## filtered data set
+NOPD %>% 
+  select(-c("Unit", "PIB File Number", "Investigation status", "Subject Arrest Charges")) -> NOPD2 ## remove the variables we don't need
+
+str(NOPD$`Use of Force Level`) ## we will use level of force to find if the case was done by one officer or an unit of officer. Lx = one officer [label: Solo]; Lx | Ly etc. = more than one officers [label: Groups]
+
+NOPD2 %>% 
+  mutate(`Use of Force Level2` = nchar(`Use of Force Level`)>2) -> NOPD_1 ## to find solo and groups. true = groups. false = individual
+
+NOPD_1$`Use of Force Level2`[NOPD_1$`Use of Force Level2` == "TRUE"] <- 1 ##rename true and false
+NOPD_1$`Use of Force Level2`[NOPD_1$`Use of Force Level2` == "FALSE"] <- 0
+NOPD_1$`Use of Force Level2` <- as.integer(NOPD_1$`Use of Force Level2`)
+
+NOPD_1 %>% 
+  mutate(`Use of Force Level2` = recode(`Use of Force Level2`,
+                                        `1` = "Groups",
+                                        `0` = "Solo")) %>% 
+  rename(Solo_Or_Not = `Use of Force Level2`) -> NOPD_0987 ##final result
+
+
+NOPD_0987 %>% 
+  relocate(Solo_Or_Not, before = "Originating Bureau") -> NOPD_09876
+
+
+write_csv(NOPD_09876, "NOPD.csv")
+```
+
+```{r}
+NOPD <- read_delim("~/DATA612_group_project/NOPD.csv")
+NOPD%>% 
+  filter(Solo_Or_Not == "Solo") -> NOPD3
+
+write_csv(NOPD3, file = "SOLO_NOPD1.csv")
+
+SOLO_NOPD1 <- read_csv("~/DATA612_group_project/SOLO_NOPD1.csv")
+
+```
+
+```{r}
+
+NOPD %>%
+  filter(grepl("Firearm", (`Use of Force Type`))) -> NOPD_USE_FIRE
+unique(NOPD_USE_FIRE$`Use of Force Type`)
+         
+```
+
+
+```{r}
+NOPD_USE_FIRE %>% 
+ggplot(mapping = aes(x = `Officer Age` , y = `Officer Years of Service`, color = `Officer Gender`))+
+  geom_point()+
+  geom_smooth(method = lm, se = FALSE)
+```
+
+```{r}
+SOLO_NOPD1 %>% 
+  mutate(firearm_or_not = ifelse(`Use of Force Type` == "Firearm (Discharged)" | `Use of Force Type` == "Firearm (Exhibited)", 1, 0)) -> SOLO_NOPD2 ## 1 is for firearms, 0 = not firearm (other force)
+
+aov2 <- aov(firearm_or_not ~ `Officer Gender` + `Officer Years of Service` + `Officer Gender` * `Officer Years of Service`, data = SOLO_NOPD2)
+
+summary(aov2)
+## We found officers gender, years of services, and interaction b/w Officer Gender:Officer Years of Service do not have significance association with outcome of use of firearms.
+
+
+```
+```{r}
+SOLO_NOPD1 %>% 
+  mutate(firearm_or_not = ifelse(`Use of Force Type` == "Firearm (Discharged)" | `Use of Force Type` == "Firearm (Exhibited)" |`Use of Force Type` == "Rifle (Pointed)" |`Use of Force Type` == "Shotgun (Pointed)", 1, 0)) -> SOLO_NOPD3 ## 1 is for firearms, 0 = not firearm (other force)
+
+aov3 <- aov(firearm_or_not ~ `Officer Gender` + `Officer Years of Service` + `Officer Gender` * `Officer Years of Service`, data = SOLO_NOPD3)
+
+summary(aov3)
+```
+
+```{r}
+SOLO_NOPD3 %>% 
+  mutate(officer_race = ifelse(`Officer Race/Ethnicity` == "White", 1, 0)) -> Officer_white
+aov4 <- aov(firearm_or_not ~ `Officer Gender` + officer_race + `Officer Gender` * officer_race, data = Officer_white)
+
+summary(aov4)
+```
+```{r}
+SOLO_NOPD3 %>% 
+  mutate(officer_race_b = ifelse(`Officer Race/Ethnicity` == "Black", 1, 0)) -> Officer_black
+aov5 <- aov(firearm_or_not ~ `Officer Gender` + officer_race_b + `Officer Gender` * officer_race_b, data = Officer_black)
+
+summary(aov5)
+```
+
+```{r}
+SOLO_NOPD1 %>% 
+  mutate(`Officer Race/Ethnicity` = recode(`Officer Race/Ethnicity`,
+                                           `Black` = 1,
+                                            `White` = 2,
+                                             `Asian/Pacifi` = 3,
+                                           `Asian/Pacif` = 3,
+                                             `Race-Unknown` = 4,
+                                             `Not Specifie` = 5,
+                                             `NA` = 6,
+                                             `American Ind` = 7
+                                           ))
+
+summary(lm(firearm_or_not ~ `Officer Race/Ethnicity`, data = SOLO_NOPD3))
+
+```
+
+## Average of suject hospitalized 

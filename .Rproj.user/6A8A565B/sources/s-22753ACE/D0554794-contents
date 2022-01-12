@@ -1,0 +1,97 @@
+---
+title: "chapter11"
+author: "Yuka Chen"
+date: "11/8/2021"
+output:
+  word_document: default
+  html_document: default
+---
+```{r}
+library(tidyverse)
+```
+
+11.10
+
+The response variable is carbon dioxide use (CO2), and explanatory variables are GDP and life expectancy. 
+
+(a)
+R = 0.787 is the correlation between observed and predicted y-value of the multiple regression, which means it can also describe the association between response variable CO2 and the two explanatory variables.
+
+(b) No. It did not help much to add life expectancy to the model because the multiple correlation R is almost the same as the correlation of CO2 and GDP, r. However, it doesn’t mean that life expectancy is very weakly correlated with CO2, it just means that adding life expectancy to the model will not improve the model much when we only use GDP as a predictor of CO2. 
+
+11.34. For the OECD data file at the text website, shown in Table 3.13 (page 58), pose a research question about how at least two of the variables shown in that table relate to carbon dioxide emissions. Conduct appropriate analyses to address that question, and prepare a one-page report summarizing your analyses and conclusions.
+
+Does variable GDP or variable HDI have a stronger prediction of CO2 emission levels?
+
+Null hypothesis: the overall regression is not significant. 
+Alternative hypothesis: the overall regression is significant. 
+
+The R-squared for a model that predicts CO2 levels as a result of variable GDP is 0.4472 and the R-squared for a model that predicts CO2 level as a result of HDI is 0.1191.
+
+
+
+```{r}
+OECD <- read.table("http://users.stat.ufl.edu/~aa/smss/data/OECD.dat", header=TRUE)
+```
+
+```{r}
+CO2_GDP <- lm(formula = C02 ~ GDP, data=OECD)
+summary(CO2_GDP)
+```
+```{r}
+CO2_HDI <- lm(formula = C02 ~ HDI,data=OECD)
+summary(CO2_HDI)
+ggplot(data = OECD, mapping = aes(x = HDI, y = C02))+
+  geom_point()+
+  geom_smooth(method = lm, se = FALSE)
+```
+The R-squared as a result of multiple regression is 0.4475 which suggestS variable GDP is a better predictor for the multiple regression model. 
+
+```{r}
+OECD_Analysis=lm(C02 ~ GDP + HDI, data = OECD)
+summary(OECD_Analysis)
+ggplot(data = OECD, mapping = aes(x = HDI, y = HDI))+
+  geom_point()+
+  geom_smooth(method = lm, se = FALSE)
+```
+
+
+```{r}
+OECD_ANOVA <- aov(C02 ~ GDP + HDI + GDP*HDI, data = OECD)
+summary(OECD_ANOVA)
+```
+
+According to the interpretation of the ANOVA table suggest that such large p-values of variables GDP and HDI would not explain a significant amount of variation.
+
+
+11.35. Using software with the Crime data file at the text website, conduct a regression analysis of violent crime rate with the explanatory variables poverty rate, the percentage living in urban areas, and the percentage of high school graduates. Prepare a report in which you state a research question you could answer with these data, conduct descriptive and inferential analyses, and provide interpretations and summarize your conclusions.
+
+*Crime dat does not the variables we need for this questions, so I use Crime 2 instead.
+```{r}
+Crime <- read.table("http://users.stat.ufl.edu/~aa/smss/data/Crime2.dat", header = TRUE)
+```
+
+Question: Do poverty rate, urbanization, and the percentage of high school graduates affect violent crime rate?
+
+
+```{r}
+Crime_nodc <- Crime[!(Crime$State=="DC"),] ##remove DC, the outlier
+Analysis <- lm(violent ~ poverty+metro+highschool, data = Crime_nodc)
+summary(Analysis)
+```
+
+Y^ = ŷ = -1248.64 + 9.34*1 +8.09 *2 + 41.02*3
+
+When percentage of people living in metropolitan areas increases one unit, it results a 9.34 increase in violent crimes per 100,000. 
+
+When percentage of people who graduate high school increases one unit, it results in a 8.09 unit increase in violent crimes per 100,000. 
+
+When percentage of people living living above the poverty level results in a 41.02 unit increase in violent crimes per 100,000. 
+
+After analyzing each regression prediction equation with each variable individually predicting violent crime, variable high school had the smallest r-squared value. 
+
+The multiple regression R-squared equation is 0.58, which means there is a 58% reduction in error using variables metro, poverty, and high school rather than y-hat.
+
+A small p-value suggests that the case of hypothesis that the variable coefficient is 0, the coefficients are very unlikely to equal zero and influence violent crime. 
+
+

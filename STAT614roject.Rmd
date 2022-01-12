@@ -1,0 +1,16 @@
+---
+title: "STAT614roject"
+author: "Yuka Chen"
+date: "10/4/2021"
+output: html_document
+---
+
+```{r}
+world_covid <- read.csv("https://covid.ourworldindata.org/data/owid-covid-data.csv")
+```
+
+```{r}
+colnames(world_covid)
+View(world_covid)
+```
+

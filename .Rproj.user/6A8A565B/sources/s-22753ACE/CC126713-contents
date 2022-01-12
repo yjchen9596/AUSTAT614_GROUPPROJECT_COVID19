@@ -1,0 +1,37 @@
+---
+title: "R Notebook"
+output:
+  html_document:
+    df_print: paged
+---
+
+```{r}
+library(tidyverse)
+world_covid <- read.csv("https://covid.ourworldindata.org/data/owid-covid-data.csv")
+colnames(world_covid)
+
+getmode <- function(v) {
+  uniqv <- unique(v)
+  uniqv[which.max(tabulate(match(v, uniqv)))]
+}
+
+getmode(world_covid$continent)
+
+
+Africa <- world_covid %>% 
+  filter(continent == "Africa")
+Asia <- world_covid %>% 
+  filter(continent == "Asia")
+Europe <- world_covid %>% 
+  filter(continent == "Europe")
+North_America <- world_covid %>% 
+  filter(continent == "North America")
+South_America <- world_covid %>% 
+  filter(continent == "South America")
+Oceania <- world_covid %>% 
+  filter(continent == "Oceania")
+
+sort(table(world_covid$continent), decreasing = TRUE)
+
+```
+

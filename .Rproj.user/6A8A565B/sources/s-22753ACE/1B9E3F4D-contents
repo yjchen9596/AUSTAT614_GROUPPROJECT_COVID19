@@ -1,0 +1,302 @@
+---
+title: "states_chapter14"
+author: "Yuka Chen"
+date: "11/21/2021"
+output: word_document
+---
+```{r}
+library(MASS)
+library(tidyverse)
+```
+
+##14.5. Use software with the Crime2 data file at the text website, excluding the observation for D.C. Let y = murder rate. For the five explanatory variables in that data file (excluding violent crime rate), with α = 0.10 in tests,
+
+```{r}
+Crime123 <- read.table("http://users.stat.ufl.edu/~aa/smss/data/Crime2.dat", 
+           header=TRUE)
+Crime3 <- Crime123 %>% 
+  dplyr::filter(State != "DC") %>% ## removed DC from the values
+  dplyr::select(-violent,-State)
+
+regression <- lm(murder ~ poverty + single + white + metro+highschool, data = Crime3)
+summary(regression)
+```
+
+##(a) Use backward elimination to select a model. Interpret the result.
+
+```{r}
+a_5 <- stepAIC(regression, direction = "backward")
+summary(a_5)
+a_5$anova
+
+```
+
+From the R backward regression result, we keep the all five variables poverty, single, metro, white and highschool.  y-carrot = 3.048 + 0.29(poverty)+1.137 (single)+0.047 (metro)+ -0.078(white) + -0.12(highschool)
+
+
+From the R backward regression result, we know that the final predictors are murder, single, metro, and highschool.
+
+##(b) Use forward selection to select a model. Interpret the result.
+
+```{r}
+b_5 <- stepAIC(regression, direction = "forward", trace = FALSE)
+b_5
+summary(b_5)
+b_5$anova
+```
+
+
+From the R forward regression result, we know that the final predictors are all murder, poverty, single, metro and highschool.
+y-carrot = 3.048  + 0.28(poverty)+  1.13(single) + 00.05(metro) + -0.077 (white), -0.12 (high school)
+ 
+(c) Use stepwise regression. Interpret the result.
+
+```{r}
+stepAIC(regression, direction = "both", trace = F)
+c_5 <- stepAIC(regression, direction = "both", trace = F)
+summary(c_5)
+c_5$anova
+```
+
+
+From the R stepwise regression result, we know that the final predictors are murder, single, metro, and highschool.
+y-carrot = 3.048c + 0.28(poverty)+1.13735 (single) + 0.04711 (metro) + -0.07795  (white)
+
+##(d) Compare results of the three selection procedures. How is it possible that a variable (percentage with a high school education) can be the first variable dropped in (a) yet the second added in (b)?
+
+Because p-value of high school in original regression analysis is 0.159 which is bigger than 0.10 so it would be eliminated in the step i. In forward selection step 2, high school education is statistically significant when the percent of families headed by a single parents is in the model, so high school would be included. 
+
+##(e) Now include the D.C. observation. Repeat (a) and (b), and compare to results excluding D.C. What does this suggest about the influence outliers can have on automatic selection procedures?
+
+
+```{r}
+Crime123 <- read.table("http://users.stat.ufl.edu/~aa/smss/data/Crime2.dat", header=TRUE)
+
+regression123 <- lm(murder ~ poverty + single + metro + white + highschool, data = Crime123)
+summary(regression123)
+
+model123 <- lm(murder ~ poverty + single + metro + white + highschool, data = Crime123)
+
+stepAIC(model123, direction = "backward", trace = FALSE) -> m
+m
+stepAIC(model123, direction = "forward", trace = FALSE) -> n
+n
+```
+
+for backward elimination, the best predictor variables are poverty,single, and white.
+
+y-carrot = -14.926 + 0.29(poverty)+3.18 (single)+-0,19(white).
+
+For forward elimination, we fot all variabls as the best predictors. 
+ -33.73141      0.58140      2.82468      0.05105     -0.19589      0.19959 
+y-carrot = -33.73  + 0.58(poverty)+ 2.82(single) + 0.05(metro) + -0.20 (white), 0.20 (highschool)
+
+
+##14.7. For the data for 21 nations in the UN2 data file at the text website that are not missing observations on literacy, Table 14.10 shows various diagnostics from fitting the multiple regression model relating fertility (mean number of births per woman) to literacy rate and women’s economic activity.
+##(a) Study the studentized residuals. Are there any apparent outliers?
+```{r}
+UN2_0 <- read.table("http://users.stat.ufl.edu/~aa/smss/data/UN2.dat", header = T)
+UN2 <- UN2_0 %>% 
+  filter( Liter != ".")
+lm(Fert ~ Liter + FemEc, data = UN2)
+```
+Yes. Observe that 25th observation is the large value from the studendized residual which is 0.9438, therefore, it is most likely to be an outlier.
+
+##(b) Which, if any, observations have relatively large leverage values?
+From the table14.10, 38th and 39th observation have relatively large leverege than the all other values, 38th is 0.31 and 39th has 0.28 leverage value h.
+
+##(c) Based on the answers in (a) and (b), does it seem as if any observations may be especially influential? Explain.
+Because 25th observation has only a high studentized residual and not a relatively large leverage, we can conclude that might not have a influence on the prediction equation. And since 38th and 39th has high leverage values, we can conclude that these observation may not be very influential to the prediction equatiuon as their studentized residuals are 0.13 and 1.72.
+##(d) Study the DFFIT values. Identify an observation that may have a strong influence on the fitted values.
+
+From the table, 39th has the largest DFFIT value of 1.09.  Though 25th is has has a large DFFIT value of 0.9438, but it is an outlier. Therefore 39th has the strongest influence on the fitted values. 
+
+##(e) Study the DFBETA values. Identify an observation that is influential for the literacy estimate but not for the economic activity estimate.
+
+11th has 0.3707 for literacy estimate and 0.0620 for economic activity stimate, as well as 39th that has -0.8342 for literacy estimate and 0.0098 for economic activity stimate. so 11th and 39th are the most influential for the literacy estimate but not for the economic activity estimate.
+
+#4.10. For the Houses2 data file, fit the model to y = selling price using house size, whether the house is new, and their interaction.
+
+```{r}
+Houses2 <- read.table("http://users.stat.ufl.edu/~aa/smss/data/Houses2.dat", header = T)
+```
+
+(a) Show that the interaction term is highly significant.
+```{r}
+House2_LM <- lm(price ~ size + new + size*new, data = Houses2)
+summary(House2_LM)
+```
+
+nteraction term is highly significant because the p-value is 0.0005 which is far less than 0.05. 
+
+
+(b) Show that observation 5 is highly influential in affecting the fit in (a).
+
+```{r}
+Stud_resid <- studres(House2_LM)
+
+Leverage_h <- hatvalues(House2_LM)
+
+Houses_measure <- data_frame(Stud_resid, Leverage_h)
+head(Houses_measure,n = 10) ##first 10 values
+
+```
+(c) Show that the interaction effect is not significant when observation 5 is removed from the data set.
+
+```{r}
+Houses2_no5 <- Houses2[-c(5),]
+
+House2_LM2 <- lm(price ~ size + new + size*new, data = Houses2_no5)
+
+summary(House2_LM2)
+
+```
+When observation 5 is removed, the p-value of interaction between size of the house and whether the house is new is 0.62, so the it is not significant. 
+
+(d) Now fit the model in (a) using a GLM assuming a gamma distribution for y. Note how the estimated interaction effect differs considerably from that in (a), and note that it is not significant. (Observation 5, highly influential for ordinary least squares, is not so influential in this analysis. See also Exercise 13.22.)
+
+```{r}
+##textbook p.534 code for R
+fit <- glm(price ~ size + new + size*new, data = Houses2, family=Gamma(link = "log"))
+summary(fit) 
+
+
+
+```
+
+Assuming a gamma distribution for y = price, the p-value for interaction size*new is 0,26, so the interaction is not significant. 
+#14.14. Refer to the data from Example 14.7 on fertility rates and GDP (page 441). To allow for greater variation at higher values of mean fertility, fit a quadratic GLM with a gamma distribution for fertility rate and the identity link function. Find the GDP value at which predicted fertility rate takes its minimum value. Compare estimates and their significance to those using least squares.
+```{r}
+##textbook p.534 code for R
+
+#I used original GDP but the xoefficient for GDP is very small, so I converted it in thousand dollars. 
+
+UN2_0 %>% 
+  mutate(GDP = (GDP/1000), 
+         GDP2 = (GDP*GDP)) -> UN234
+
+model <- glm(Fert ~ GDP + GDP2 ,data =UN234)
+summary(model)
+
+model2 <- glm(Fert ~ GDP +GDP2 ,data =UN234, family = Gamma(link = "identity"))
+summary(model2)
+```
+The prediction equation of using GDP in thousand dollars is is Y^ = 3.27 + - 0.11 (GDP) + 0.0016(GDP^2)
+
+The predicted fertility tables its minimum value at 0.1/(2*0.0016) = GDP 31.25 in thousands of dollars.
+Y^ = 3.23 + -0.1 (GDP) + 0.0015(GDP^2)
+The quadratic term is significant using gamma distribution at significant level of 0.05, but no in the lease squares model.
+
+
+#4.27. Refer to the Students data file (Exercise 1.11).
+(a) Conduct and interpret a regression analysis using y = political ideology, selecting predictors from the variables in that file. Prepare a report describing the research question(s) posed and analyses and diagnostic checks that you conducted, and indicate how you selected a final model. Interpret results.
+```{r}
+Student <- read.table("http://users.stat.ufl.edu/~aa/smss/data/Students.dat", header = T)
+```
+I selected 6 predictors variables: gender, age,news,tv,relig,veg. 
+```{r}
+model_student <- lm(ideol ~ gender + age + news+ tv+ relig+ veg, data = Student)
+stepAIC(model_student, direction = "backward", trace = FALSE)
+```
+From backward elimination with predictors gender, age,news,tv,relig and veg on the response political ideology, we got gender, relig and veg are the most significant variables for  y = political ideology.
+
+y^ = 2.2973 + -0.5656 (gender)+ 1.0169 (relig)+-1.0538(veg)
+
+Using 
+(b) Repeat the analysis, using y = college GPA.
+
+```{r}
+model_student <- lm(hsgpa ~ gender + age + news+ tv+ relig+ veg, data = Student)
+stepAIC(model_student, direction = "backward", trace = FALSE)
+```
+
+For y=GPA, we learned that gender, age, news and tv are the most significant variables. 
+
+y^ =  2.85734 + 0.18531 (gender)+ 0.01241 (age)+-0.03407(news) +-0.02005 (tv)
+
+#14.30. For the Mental data file at the text website and the model predicting mental impairment using life events and SES, conduct an analysis of residuals and influence diagnostics.
+
+
+```{r}
+Mental1.0 <- read.table("http://users.stat.ufl.edu/~aa/smss/data/Mental.dat", header = T)
+Mental1.0 %>%
+  mutate(life2 = (life*life),
+         ses2 = (ses*ses)) -> Mental
+
+fit <- lm(impair ~ life +ses ,data = Mental1.0)
+hist(residuals(fit)) # histogram of residuals
+plot(fitted(fit), residuals(fit), ylab="Residuals", xlab="Predicted y")
+dffits(fit); dfbetas(fit); cooks.distance(fit)
+
+
+Mental_LM <- glm(impair ~ ., data = Mental, trace  = FALSE)
+Mental_StepwiseAnalysis <- stepAIC(Mental_LM, direction = "backward", trace = F,steps = 1000) ## backward
+summary(Mental_StepwiseAnalysis)
+
+
+
+Mental_Quadratic <- glm(impair ~ ., Mental, family=Gamma(link = "log"))
+summary(Mental_Quadratic)
+```
+y = impairment, x = life events and SES. 
+
+Using the backward elimination the main effects, we know that both life event and ses are significant since the p-value is smaller than 0.05.
+y^ =  28.22 +0.10326(life)+-0.09748 (SES)
+For quadratic analysis, it seems like life, ses, life^2 and ses^ are not particularly significant, but overrall it has significance on the main effect. 
+
+Y^=3.312+ 0.004030 (life)+-0.002712(ses)+-0.000003(life^2)+-0.000008(ses^2)
+
+
+Residuals and diagnostics do not show any marekd abnormally. 
+
+#14.32. For the UN2 data file at the text website, using methods of this chapter,
+(a) Find a good model relating x = per capita GDP to y = life expectancy. (Hint: What does a plot of the data suggest?)
+```{r}
+
+fit <- glm(Life ~ GDP, data = UN2_0, family=Gamma(link = "log"))
+summary(fit) 
+
+UN2_0 %>% 
+  ggplot(aes(x = GDP, y = Life))+
+  geom_point()+
+  geom_smooth(method = "lm", se = FALSE)
+
+UN2_0 %>% 
+  ggplot(aes(x = log(GDP), y = Life))+
+  geom_point()+
+  geom_smooth(method = "lm", se = FALSE)
+
+
+lm(Life ~ log(GDP), data = UN2_0) -> y 
+y
+stepAIC(y, direction = "backward", trace = F)
+
+model <- glm(Life ~ log(GDP), data = UN2_0)
+
+Stud_resid <- studres(model)
+
+Leverage_h <- hatvalues(model)
+
+UN_measure <- data_frame(Stud_resid, Leverage_h)
+UN_measure
+```
+The second plot shows linear association between life and log(GDP), so a modelusing log(GDP)as predictor seems appropriate. Moreover, from the second plot, there are two outliers. prediction equation y^ = 36.55 + 4.40 (logGDP) 
+From the diagnostic statistics, the obervation Nigeria and South African have very large studentized redisuals, which suggests that both are outliers. 
+
+```{r}
+UN3.0 <- UN2[-c(25, 31),] ##without nigeria and south africa
+
+summary(glm(Life ~ log(GDP), data = UN3.0))
+```
+The new prediction equation is y^ 31.30 + 5.11 (logGDP). For each unit increase in log of GDP, the predicted life expectancy would increase about 5.11 units.
+
+
+(b) Find a good prediction equation for y = fertility. Explain how you selected variables for the model.
+
+Final Model: Fert ~ HDI + Cont + GDP + Liter + FemEc
+```{r}
+UNFert <- lm(Fert ~ HDI + Cont + GDP +Liter + FemEc, data = UN2_0)
+UNFert3 <- stepAIC(UNFert, direction = "backward", trace = F) 
+UNFert3$anova
+summary(UNFert3)
+```

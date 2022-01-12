@@ -1,0 +1,232 @@
+---
+title: "analysis"
+author: "Yuka Chen"
+date: "11/8/2021"
+output: html_document
+---
+```{r}
+library(tidyverse)
+library(ggrepel)
+```
+
+```{r}
+thirty_countries_covid <- read_csv("~/STAT_GROUPPROJECT_COVID19/thirty_countries_covid.csv")
+```
+
+```{r}
+thirty_countries_covid  %>%
+  filter(date == "2021-04-24") -> one_day_thirty_countries
+```
+
+
+```{r}
+thirty_countries_covid %>% 
+  drop_na() %>% 
+  dplyr::select(location, gdp_per_capita, total_deaths_per_million,total_vaccinations,new_deaths) %>% 
+  group_by(location, gdp_per_capita, total_deaths_per_million) %>% 
+  ggplot(aes(new_deaths,total_vaccinations))+
+  geom_point(na.rm = TRUE) +
+  geom_smooth( se = FALSE) +
+  ylab("New Death by COVID") +
+  xlab("Total Vaccinations")+
+  labs(title =" Case recorded from 2020-12-13 to 2021-11-01")
+```
+
+
+
+
+
+
+
+```{r}
+thirty_countries_covid %>% 
+  select(location, people_fully_vaccinated, people_vaccinated, new_deaths) %>% 
+  group_by(location) %>% 
+  drop_na(new_deaths) %>% 
+  ggplot(aes(log(people_fully_vaccinated),log(new_deaths)))+
+  geom_jitter(na.rm = TRUE)+
+  geom_smooth(method = lm, se = FALSE)+
+  facet_wrap(~location)+
+  ylab("Death by COVID Rate ")+
+  xlab("People Fully Vaccinated")
+```
+
+```{r}
+thirty_countries_covid %>% 
+  filter(date == "2021-04-24") -> mydata3 ## on date == "2021-04-24"
+```
+
+
+```{r}
+one_day_thirty_countries %>% 
+  dplyr::select(new_deaths,gdp_per_capita, location) %>% 
+  ggplot(aes(x = log(gdp_per_capita), 
+             y = log(new_deaths),
+             color = location)) +
+  geom_jitter(stat = "identity") +
+  geom_text(aes(label= ifelse(log(gdp_per_capita) < 8.5,
+     as.character(location),'')),hjust=0,vjust=0) +
+  labs(title = "Death Numbers by COVID19 vs GDP per Capita") +
+  xlab("GDP per Capita") +
+  ylab("Death") -> mydata2_outlier
+ mydata2_outlier
+```
+
+```{r}
+one_day_thirty_countries %>% 
+  ggplot(aes(x = gdp_per_capita, y = total_deaths_per_million))+
+  geom_point()+
+  geom_label_repel(aes(label = location))+
+  geom_smooth(se = FALSE) +
+  labs(title = "Death Numbers by COVID19 vs GDP per Capita")+
+  xlab("GDP per Capita")+
+  ylab("Total Deaths per Million")
+```
+```{r}
+library(MASS)
+lm(total_deaths_per_million ~ smoker_total, data = mydata) -> j
+summary(j)
+```
+
+```{r}
+
+
+mydata3 %>% 
+  ggplot(aes(x = smoker_total, y = total_deaths_per_million))+
+  geom_point()+
+  geom_label_repel(aes(label = location))+
+  geom_smooth(se = FALSE)+
+  labs(title = "Death Numbers by COVID19 vs Smoker Population")+
+  xlab("Smokers Rate")+
+  ylab("Total Death by COVID per Million")
+```
+```{r}
+lm(total_deaths_per_million ~ female_smokers, data = thirty_countries_covid) -> k
+summary(k)
+
+lm(total_deaths_per_million ~ male_smokers, data = thirty_countries_covid) -> l
+summary(l)
+```
+
+```{r}
+one_day_thirty_countries %>% 
+  ggplot(aes(x = female_smokers, y = total_deaths_per_million)) +
+  geom_point() +
+  geom_text_repel(aes(label = location)) +
+  geom_smooth(se = FALSE) +
+  labs(title = "Death Numbers by COVID19 vs Female Smokers") +
+  xlab("Female Smokers Rate") +
+  ylab("Total Death by COVID per Million")
+
+
+```
+
+
+```{r}
+one_day_thirty_countries %>% 
+  ggplot(aes(x = male_smokers, y = total_deaths_per_million))+
+  geom_point()+
+  geom_text_repel(aes(label = location))+
+  geom_smooth(se = FALSE)+
+  labs(title = "Death Numbers by COVID19 vs Male Smokers")+
+  xlab("Male smokers Rate")+
+  ylab("Total Death by COVID per Million")
+```
+
+```{r}
+lm(total_deaths_per_million ~ extreme_poverty, data = mydata) -> p
+summary(p)
+```
+
+
+```{r}
+one_day_thirty_countries%>% 
+  ggplot(aes(x = log(extreme_poverty), y = total_deaths_per_million)) +
+  geom_point() +
+  geom_text_repel(aes(label = location)) +
+  geom_smooth( se = FALSE) +
+  labs(title = "Death Numbers by COVID19 vs Extreme Poverty") +
+  xlab("Extreme Poverty Rate") +
+  ylab("Total Death by COVID per Million")
+```
+```{r}
+one_day_thirty_countries %>% 
+  ggplot(aes(x = log(population), y = total_deaths_per_million))+
+  geom_point()+
+  geom_text_repel(aes(label = location))+
+  geom_smooth( se = FALSE)+
+  labs(title = "Death Numbers by COVID19 vs Population")+
+  xlab("Number of Population")+
+  ylab("Total Death by COVID per Million")
+
+```
+
+```{r}
+
+## maybe pick another date that all continents have all info
+thirty_countries_covid %>% 
+  group_by(date) %>% 
+  filter(continent == "Asia") %>% 
+  ggplot(aes(log(total_tests_per_thousand), log(new_deaths)))+
+  geom_smooth(method= lm, se = FALSE)+
+  geom_jitter()+
+  labs(title = "COVID Death vs test numbers in asia ")+
+  xlab("total tests per thousand")+
+  ylab("Total Numbers of Death by COVID")
+  
+
+thirty_countries_covid %>% 
+  group_by(date) %>% 
+  filter(continent == "Africa") %>% 
+  ggplot(aes(log(total_tests_per_thousand), log(new_deaths)))+
+  geom_smooth(method= lm, se = FALSE)+
+  geom_jitter()+
+  labs(title = "COVID Death vs test numbers in Africa ")+
+  xlab("total tests per thousand")+
+  ylab("Total Numbers of Death by COVID")
+
+thirty_countries_covid %>% 
+  group_by(date) %>% 
+  filter(continent == "Europe") %>% 
+  ggplot(aes(log(total_tests_per_thousand), log(new_deaths)))+
+  geom_smooth(method= lm, se = FALSE)+
+  geom_jitter()+
+  labs(title = "COVID Death vs test numbers in Europe ")+
+  xlab("total tests per thousand")+
+  ylab("Total Numbers of Death by COVID")
+
+thirty_countries_covid %>% 
+  group_by(date) %>% 
+  filter(continent == "Oceania") %>% 
+  ggplot(aes(log(total_tests_per_thousand), log(new_deaths)))+
+  geom_smooth(method= lm, se = FALSE)+
+  geom_jitter()+
+  labs(title = "COVID Death vs test numbers in Oceania ")+
+  xlab("total tests per thousand")+
+  ylab("Total Numbers of Death by COVID")
+
+
+thirty_countries_covid %>% 
+  group_by(date) %>% 
+  filter(continent == "NorthAmerica") %>% 
+  ggplot(aes(log(total_tests_per_thousand), log(new_deaths)))+
+  geom_smooth(method= lm, se = FALSE)+
+  geom_jitter()+
+  labs(title = "COVID Death vs test numbers in NorthAmerica ")+
+  xlab("total tests per thousand")+
+  ylab("Total Numbers of Death by COVID")
+
+thirty_countries_covid%>% 
+  group_by(date) %>% 
+  filter(continent == "SouthAmerica") %>% 
+  ggplot(aes(log(total_tests_per_thousand), log(new_deaths)))+
+  geom_smooth(method= lm, se = FALSE)+
+  geom_jitter()+
+  labs(title = "COVID Death vs test numbers in SouthAmerica ")+
+  xlab("total tests per thousand")+
+  ylab("Total Numbers of Death by COVID")
+
+
+
+```
+

@@ -1,0 +1,19 @@
+---
+title: "GroupProject_3"
+author: "Yuka Chen"
+date: "9/27/2021"
+output: word_document
+---
+
+```{r country_wise, include=FALSE}
+library(dplyr)
+library(ggplot2)
+country_wise_latest.csv <- read.csv("file:///Users/yuka/Desktop/STATS614/Group_Project_Country_Covid/country_wise_latest.csv", header = TRUE)
+country_wise <- country_wise_latest.csv %>%
+  filter(Confirmed < 100) %>%
+  select(Country.Region, Confirmed, Deaths, WHO.Region) %>% 
+  ggplot(mapping = aes(x = Confirmed)) +
+  geom_boxplot() + 
+  facet_wrap(~WHO.Region$Europe)
+
+```
